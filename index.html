@@ -33,9 +33,23 @@
   }
 
   if(document.readyState === 'loading'){
-    document.addEventListener('DOMContentLoaded', initFirebase);
+    document.addEventListener('DOMContentLoaded', function(){
+      initFirebase();
+      checkAdminParam();
+    });
   } else {
     initFirebase();
+    checkAdminParam();
+  }
+
+  function checkAdminParam(){
+    var params = new URLSearchParams(window.location.search);
+    if(params.get('admin') === 'true'){
+      // URL에 ?admin=true 가 있으면 자동으로 관리자 로그인 페이지로
+      showPage('page-admin');
+      document.getElementById('admin-panel-section').style.display = 'none';
+      document.getElementById('admin-login-section').style.display = '';
+    }
   }
 </script>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@300;400;500;600;700&family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -1272,7 +1286,8 @@ function showAdminPanel(){
   var list=document.getElementById('submission-list');
   if(submissions.length===0){ list.innerHTML='<div class="empty-msg">📋 아직 제출된 문진표가 없습니다.</div>'; return; }
   list.innerHTML='';
-  submissions.slice().reverse().forEach(function(sub,i){
+  var sortedSubs = submissions.slice().sort(function(a,b){ return new Date(b.date) - new Date(a.date); });
+  sortedSubs.forEach(function(sub,i){
     var card=document.createElement('div');
     card.className='sub-card';
     card.onclick=function(){ showReport(sub); };
@@ -1378,8 +1393,9 @@ function renderSelectDeleteMode(){
   list.innerHTML = '';
   list.appendChild(header);
 
-  submissions.slice().reverse().forEach(function(sub, i){
-    var realIdx = submissions.length - 1 - i;
+  var sortedSubsDel = submissions.slice().sort(function(a,b){ return new Date(b.date) - new Date(a.date); });
+  sortedSubsDel.forEach(function(sub, i){
+    var realIdx = submissions.indexOf(sub);
     var row = document.createElement('div');
     row.style.cssText = 'display:flex;align-items:center;gap:10px;padding:10px 14px;background:#fff;border-radius:10px;margin-bottom:6px;border:1px solid #E8E4DF;';
     var badge = sub.hasPage3 ? ' <span style="background:#E8C87A;color:#5C3D00;font-size:10px;padding:2px 7px;border-radius:10px;font-weight:700;">2단계 포함</span>' : '';
