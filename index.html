@@ -844,7 +844,7 @@ var CHECKLISTS = {
       ]}
     ],
     sectionsPage3:[
-      {title:"사회적 의사소통 기술 (12~18개월 기준)",icon:"👥",subsections:[
+      {title:"사회적 의사소통 기술",icon:"👥",subsections:[
         {label:"눈 맞춤",items:[
           {id:"p3_s1",main:"다양한 상황에서 눈을 마주쳐요 (원할 때뿐 아니라 기쁠 때·속상할 때·놀이할 때 등)",hint:"눈 맞춤의 빈도와 상황이 다양한지 확인해보세요."}
         ]},
@@ -1082,10 +1082,7 @@ function buildPage3(){
   var data = CHECKLISTS[24];
   var gLabel = childInfo.gender==='남'?'남아':'여아';
   var exprCount = countExpression24();
-  document.getElementById('check-header-info-3').innerHTML =
-    '<span class="age-tag">'+data.label+'</span><span class="page-tag">2단계'+
-    '<h2>의사소통 방식 추가 확인</h2>'+
-    '';
+  document.getElementById('check-header-info-3').innerHTML = '';
   var body = document.getElementById('checklist-body-3');
   body.innerHTML = '';
   data.sectionsPage3.forEach(function(sec){ body.appendChild(buildSection(sec, checkedItemsP3, 'p3')); });
