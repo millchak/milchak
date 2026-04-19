@@ -1863,12 +1863,9 @@ function generateParentSummary(sub, rPct, ePct, cPct, sPct, pct, data){
   // ── 하단 안내 ──
   var bs = 'font-size:17px;color:#5C3D1E;line-height:1.75;';
   html += '<div style="margin-top:22px;padding-top:18px;border-top:1px solid #DDD8D2;text-align:center;word-break:keep-all;">';
-  html += '<p style="'+bs+'font-weight:400;margin-bottom:12px;">본 결과는 보호자 보고를 바탕으로 한 선별 결과입니다.<br>진단이 아닌, 언어 촉진 방향 안내를 위한 참고 자료입니다.</p>';
-  html += '<p style="'+bs+'font-weight:400;margin-bottom:12px;">아이의 현재 수준에 맞게 상호작용 방법을 조정하면<br>반응과 표현 기회를 더 잘 이끌어낼 수 있습니다.</p>';
-  html += '<p style="'+bs+'font-weight:700;">'+name+' 아동에게 알맞은 상호작용 방법과 실천 방향이 궁금하시다면<br>👉 지금 바로 안내 페이지에서 확인해보세요.</p>';
-  html += '</div>';
-  html += '<div style="text-align:center;margin-top:18px;">';
-  html += '<a href="https://www.notion.so/25995e2de66c8064851be82a955e7af4?source=copy_link" target="_blank" style="display:inline-block;background:#5C3D1E;color:#fff;font-size:14px;font-weight:700;padding:12px 28px;border-radius:30px;text-decoration:none;">💌 안내 페이지 바로가기 💌</a>';
+  html += '<p style="'+bs+'font-weight:400;margin-bottom:14px;">본 결과는 보호자 보고를 바탕으로 한 선별 결과이며,<br>진단이 아닌 언어 촉진 방향 안내를 위한 참고 자료입니다.</p>';
+  html += '<p style="'+bs+'font-weight:700;">피드백 과정에서는 '+name+' 아동의 실제 반응까지 함께 살펴보며</p>';
+  html += '<p style="'+bs+'font-weight:700;margin-top:4px;">실천 방향을 구체적으로 안내 드립니다.</p>';
   html += '</div>';
   html += '</div>';
   return html;
