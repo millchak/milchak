@@ -877,6 +877,12 @@ var submissions = (function(){
   } catch(e){ return []; }
 })();
 var submissionCodes = {}; // 동명이인 처리용
+var deletedCodes = (function(){
+  try {
+    var saved = localStorage.getItem('milchak_deleted_codes');
+    return saved ? JSON.parse(saved) : [];
+  } catch(e){ return []; }
+})();
 
 function showPage(id){
   document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active');});
@@ -1283,8 +1289,14 @@ function sendToGoogleSheets(sub){
         riskLevel: risk,
         fullData:  JSON.stringify(sub),
         createdAt: new Date().toISOString()
-      }).then(function(){ console.log('Firebase 저장 완료'); })
-        .catch(function(e){ console.log('Firebase 오류:', e); });
+      }).then(function(docRef){
+        // doc.id를 sub에 저장 (나중에 삭제에 활용)
+        sub.firebaseId = docRef.id;
+        var idx = submissions.findIndex(function(s){ return s.code === sub.code; });
+        if(idx > -1) submissions[idx].firebaseId = docRef.id;
+        try{ localStorage.setItem('milchak_submissions', JSON.stringify(submissions)); } catch(e){}
+        console.log('Firebase 저장 완료', docRef.id);
+      }).catch(function(e){ console.log('Firebase 오류:', e); });
     } catch(e){ console.log('Firebase 오류:', e); }
   }
 }
@@ -1392,7 +1404,8 @@ function loadFromSheets(){
         if(data.fullData){
           try{
             var sub = JSON.parse(data.fullData);
-            if(existingCodes.indexOf(sub.code) === -1){
+            sub.firebaseId = doc.id; // doc.id 저장
+            if(existingCodes.indexOf(sub.code) === -1 && deletedCodes.indexOf(sub.code) === -1){
               submissions.push(sub);
               existingCodes.push(sub.code);
               added++;
@@ -1494,8 +1507,22 @@ function deleteSelected(){
   var idxToDelete = [];
   boxes.forEach(function(b){ idxToDelete.push(parseInt(b.getAttribute('data-idx'))); });
   idxToDelete.sort(function(a,b){ return b-a; }); // 큰 인덱스부터 삭제
-  idxToDelete.forEach(function(idx){ submissions.splice(idx,1); });
+  idxToDelete.forEach(function(idx){
+    var s = submissions[idx];
+    if(s){
+      // deletedCodes에 추가 (다른 기기 대비)
+      if(s.code) deletedCodes.push(s.code);
+      // Firebase에서도 삭제
+      if(s.firebaseId && window.firebaseReady && typeof fbFirestore !== 'undefined'){
+        fbFirestore.collection('submissions').doc(s.firebaseId).delete()
+          .then(function(){ console.log('Firebase 삭제 완료:', s.firebaseId); })
+          .catch(function(e){ console.log('Firebase 삭제 오류:', e); });
+      }
+    }
+    submissions.splice(idx,1);
+  });
   try{ localStorage.setItem('milchak_submissions', JSON.stringify(submissions)); } catch(e){}
+  try{ localStorage.setItem('milchak_deleted_codes', JSON.stringify(deletedCodes)); } catch(e){}
   // 모드 해제
   selectDeleteMode = false;
   var btn = document.getElementById('btn-select-delete');
@@ -1772,16 +1799,17 @@ function generateParentSummary(sub, rPct, ePct, cPct, sPct, pct, data){
   // ── 불편한 질문 (지연 있을 때만) ──
   if(anyDelay){
     // 질문 풀 (결과 패턴별)
+    var firstName = name.length > 1 ? name.slice(1) : name; // 성 제외 이름
     var qPool = {
       // 수용언어 지연 관련
       r: [
         '아이가 "왜 이걸 못 알아들을까" 답답하셨던 적 있나요?',
         '오늘 하루 아이에게 건 말 중에, 아이가 실제로 이해했다고 확신할 수 있는 말이 몇 개나 되나요?',
-        '아이에게 "이리 와", "앉아", "줘봐"를 동시에 말한 적 있나요?'
+        firstName+'에게 "이리 와", "앉아", "줘봐"를 동시에 말한 적 있나요?'
       ],
       // 표현언어 지연 관련
       e: [
-        '아이가 손을 뻗기도 전에 이미 원하는 걸 가져다 준 적이 오늘 몇 번인가요?',
+        firstName+'가 손을 뻗기도 전에 이미 원하는 걸 가져다 준 적이 오늘 몇 번인가요?',
         '"말 안 해도 다 알아"는 아이 언어발달에 있어서 가장 위험한 문장입니다.',
         '아이가 뭔가 말하려고 입을 열었을 때, 끝까지 기다려준 적이 오늘 있었나요?'
       ],
@@ -1819,7 +1847,7 @@ function generateParentSummary(sub, rPct, ePct, cPct, sPct, pct, data){
       selectedQ.forEach(function(q){
         html += '<div style="font-size:13.5px;color:#4A2020;line-height:1.85;padding:7px 0;border-bottom:1px dashed #E8C4C4;">'+q+'</div>';
       });
-      html += '<div style="font-size:12.5px;color:#A05050;margin-top:10px;font-style:italic;">이 질문들은 잘못을 지적하려는 것이 아니라, 가장 빠르게 아이 언어를 끌어올릴 수 있는 지점을 찾기 위한 것입니다.</div>';
+      html += '<div style="font-size:12.5px;color:#A05050;margin-top:10px;font-style:italic;">이 질문들은 잘못을 지적하려는 것이 아니라, 가장 빠르게 '+firstName+' 언어를 끌어올릴 수 있는 지점을 찾기 위한 것입니다.</div>';
       html += '</div>';
     }
   }
