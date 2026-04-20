@@ -1800,30 +1800,42 @@ function generateParentSummary(sub, rPct, ePct, cPct, sPct, pct, data){
   if(anyDelay){
     // 질문 풀 (결과 패턴별)
     var firstName = name.length > 1 ? name.slice(1) : name; // 성 제외 이름
+
+    // 받침 유무 판단 → 받침 있으면 "이가", 없으면 "가"
+    function hasBatchim(str){
+      var last = str[str.length - 1];
+      var code = last.charCodeAt(0);
+      if(code < 0xAC00 || code > 0xD7A3) return false;
+      return (code - 0xAC00) % 28 !== 0;
+    }
+    var ga  = hasBatchim(firstName) ? '이가' : '가';   // ~가 / ~이가
+    var wa  = hasBatchim(firstName) ? '이와' : '와';   // ~와 / ~이와
+    var ege = hasBatchim(firstName) ? '에게' : '에게'; // 동일
+
     var qPool = {
       // 수용언어 지연 관련
       r: [
-        firstName+'가 "왜 이걸 못 알아들을까" 답답하셨던 적 있나요?',
-        '오늘 하루 '+firstName+'에게 건 말 중에, '+firstName+'가 실제로 이해했다고 확신할 수 있는 말이 몇 개나 되나요?',
+        firstName+ga+' "왜 이걸 못 알아들을까" 답답하셨던 적 있나요?',
+        '오늘 하루 '+firstName+'에게 건 말 중에, '+firstName+ga+' 실제로 이해했다고 확신할 수 있는 말이 몇 개나 되나요?',
         firstName+'에게 "이리 와", "앉아", "줘봐"를 동시에 말한 적 있나요?'
       ],
       // 표현언어 지연 관련
       e: [
-        firstName+'가 손을 뻗기도 전에 이미 원하는 걸 가져다 준 적이 오늘 몇 번인가요?',
+        firstName+ga+' 손을 뻗기도 전에 이미 원하는 걸 가져다 준 적이 오늘 몇 번인가요?',
         '"말 안 해도 다 알아"는 '+firstName+' 언어발달에 있어서 가장 위험한 문장입니다.',
-        firstName+'가 뭔가 말하려고 입을 열었을 때, 끝까지 기다려준 적이 오늘 있었나요?'
+        firstName+ga+' 뭔가 말하려고 입을 열었을 때, 끝까지 기다려준 적이 오늘 있었나요?'
       ],
       // 의사소통 기능 지연 관련
       c: [
-        firstName+'가 울면 이유도 묻기 전에 안아주거나 원하는 걸 먼저 줬던 적 있나요?',
-        firstName+'가 뭔가를 가리키거나 끌어당길 때, "어, 왜?" 한 마디 건네고 넘어간 적 있나요?',
-        '하루에 '+firstName+'와 눈을 마주치고 '+firstName+' 표정만 바라본 시간이 얼마나 되나요?'
+        firstName+ga+' 울면 이유도 묻기 전에 안아주거나 원하는 걸 먼저 줬던 적 있나요?',
+        firstName+ga+' 뭔가를 가리키거나 끌어당길 때, "어, 왜?" 한 마디 건네고 넘어간 적 있나요?',
+        '하루에 '+firstName+wa+' 눈을 마주치고 '+firstName+' 표정만 바라본 시간이 얼마나 되나요?'
       ],
       // 사회적 의사소통 지연 관련
       s: [
-        firstName+'가 무언가를 가리키며 엄마를 바라볼 때, 그 시선을 따라가지 않고 "응, 그래"하고 넘긴 적 있나요?',
-        '하루 중 '+firstName+'와 같은 것을 함께 바라보며 "저기 봐!" 했던 적이 몇 번이나 있나요?',
-        firstName+'가 까꿍, 짝짝꿍 같은 간단한 모방 놀이를 시도할 때 함께 맞춰준 경험이 최근에 있나요?'
+        firstName+ga+' 무언가를 가리키며 엄마를 바라볼 때, 그 시선을 따라가지 않고 "응, 그래"하고 넘긴 적 있나요?',
+        '하루 중 '+firstName+wa+' 같은 것을 함께 바라보며 "저기 봐!" 했던 적이 몇 번이나 있나요?',
+        firstName+ga+' 까꿍, 짝짝꿍 같은 간단한 모방 놀이를 시도할 때 함께 맞춰준 경험이 최근에 있나요?'
       ]
     };
 
