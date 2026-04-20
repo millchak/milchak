@@ -1190,6 +1190,15 @@ function submitCheck(){
   if(cPct24!==null&&cPct24<90) dAreas.push('의사소통');
   if(sPct24!==null&&sPct24<90) dAreas.push('사회적 의사소통');
   var summaryEl = document.getElementById('done-summary');
+  // 이름 받침 처리
+  function hasBatchimDone(str){
+    var last = str[str.length - 1];
+    var code = last.charCodeAt(0);
+    if(code < 0xAC00 || code > 0xD7A3) return false;
+    return (code - 0xAC00) % 28 !== 0;
+  }
+  var doneFirstName = childInfo.name.length > 1 ? childInfo.name.slice(1) : childInfo.name;
+  var doneGa = hasBatchimDone(doneFirstName) ? '이' : ''; // "이" 붙이기용 (이름+이+는, 이름+이+가 등)
   if(dAreas.length===0){
     summaryEl.innerHTML = childInfo.name+' 아동은 전반적으로 연령 기준에 부합하는 언어발달 양상이 확인되었습니다.<br><span style="font-size:13px;color:#4E7860;font-weight:400;">이 시기에도 상호작용 방향을 잘 잡아주는 것이 이후 발달에 중요합니다.</span>';
     summaryEl.style.borderLeftColor = '#4E7860';
@@ -1724,6 +1733,22 @@ function generateParentSummary(sub, rPct, ePct, cPct, sPct, pct, data){
   html += '</div>';
 
   // ── 가정 지도법: 미통과 항목 기반 구체적 생성 ──
+
+  // ── 이름 조사 처리 (받침 유무 판단) ──
+  var firstName = name.length > 1 ? name.slice(1) : name; // 성 제외 이름
+
+  function hasBatchim(str){
+    var last = str[str.length - 1];
+    var code = last.charCodeAt(0);
+    if(code < 0xAC00 || code > 0xD7A3) return false;
+    return (code - 0xAC00) % 28 !== 0;
+  }
+
+  // 받침 있으면 "이가", 없으면 "가" / "이와"→"와" / "이에게"→"에게"
+  var ga  = hasBatchim(firstName) ? '이가' : '가';
+  var wa  = hasBatchim(firstName) ? '이와' : '와';
+  var ege = '에게';
+
   var tips = [];
 
   if(!anyDelay){
@@ -1743,7 +1768,7 @@ function generateParentSummary(sub, rPct, ePct, cPct, sPct, pct, data){
       } else {
         rTip += '"'+rFail0+'" 항목이 아직 형성되지 않았습니다. ';
       }
-      rTip += '같은 말을 하루에 최소 10회 이상, 반드시 행동과 함께 반복해서 들려주세요. 아이가 이해하기 전에 표현을 기대하면 안 됩니다. 지금은 수용 어휘를 쌓는 것이 최우선입니다.';
+      rTip += '같은 말을 하루에 최소 10회 이상, 반드시 행동과 함께 반복해서 들려주세요. '+firstName+ga+' 이해하기 전에 표현을 기대하면 안 됩니다. 지금은 수용 어휘를 쌓는 것이 최우선입니다.';
       tips.push(rTip);
     }
 
@@ -1757,7 +1782,7 @@ function generateParentSummary(sub, rPct, ePct, cPct, sPct, pct, data){
       } else {
         eTip += '"'+eFail0+'" 항목이 아직 나타나지 않고 있습니다. ';
       }
-      eTip += '아이가 표현하려는 순간 즉시 3초 기다린 뒤, 표현이 나오지 않으면 엄마가 먼저 모델링해 주세요. "줘"를 못 한다면 물건을 손에 쥐고 기다렸다가 아이가 손을 뻗는 순간 "줘!"라고 짧게 들려주는 것을 하루 5회 이상 반복하세요.';
+      eTip += firstName+ga+' 표현하려는 순간 즉시 3초 기다린 뒤, 표현이 나오지 않으면 엄마가 먼저 모델링해 주세요. "줘"를 못 한다면 물건을 손에 쥐고 기다렸다가 '+firstName+ga+' 손을 뻗는 순간 "줘!"라고 짧게 들려주는 것을 하루 5회 이상 반복하세요.';
       tips.push(eTip);
     }
 
@@ -1771,7 +1796,7 @@ function generateParentSummary(sub, rPct, ePct, cPct, sPct, pct, data){
       } else {
         cTip += '"'+cFail0+'" 기능이 아직 충분히 형성되지 않았습니다. ';
       }
-      cTip += '아이가 울거나 보채는 순간을 의사소통 훈련의 기회로 사용하세요. 아이가 원하는 것을 즉시 주지 말고, 아이의 행동에 즉각적으로 말을 붙여준 뒤 주세요. "아, 물 원해? 물 줄게" 이 패턴을 하루에 최대한 많이 반복하는 것이 핵심입니다.';
+      cTip += firstName+ga+' 울거나 보채는 순간을 의사소통 훈련의 기회로 사용하세요. '+firstName+ga+' 원하는 것을 즉시 주지 말고, '+firstName+'의 행동에 즉각적으로 말을 붙여준 뒤 주세요. "아, 물 원해? 물 줄게" 이 패턴을 하루에 최대한 많이 반복하는 것이 핵심입니다.';
       tips.push(cTip);
     }
 
@@ -1785,12 +1810,12 @@ function generateParentSummary(sub, rPct, ePct, cPct, sPct, pct, data){
       } else {
         sTip += '"'+sFail0+'" 항목이 아직 나타나지 않고 있습니다. ';
       }
-      sTip += '하루 최소 3회, 아이와 마주 앉아 아이가 먼저 엄마를 보도록 기다리세요. 먼저 말을 걸지 말고, 아이가 눈을 맞추는 순간 즉시 밝게 반응해 주세요. 이 루틴이 공동주목과 눈 맞춤의 기반을 만드는 가장 직접적인 방법입니다.';
+      sTip += '하루 최소 3회, '+firstName+wa+' 마주 앉아 '+firstName+ga+' 먼저 엄마를 보도록 기다리세요. 먼저 말을 걸지 말고, '+firstName+ga+' 눈을 맞추는 순간 즉시 밝게 반응해 주세요. 이 루틴이 공동주목과 눈 맞춤의 기반을 만드는 가장 직접적인 방법입니다.';
       tips.push(sTip);
     }
 
     if(tips.length === 0){
-      tips.push('일상의 모든 순간을 언어 자극 기회로 활용하세요. 식사, 목욕, 산책 등 매 상황에서 아이가 보고 있는 것을 엄마가 먼저 말로 설명해 주는 것이 가장 효과적입니다.');
+      tips.push('일상의 모든 순간을 언어 자극 기회로 활용하세요. 식사, 목욕, 산책 등 매 상황에서 '+firstName+ga+' 보고 있는 것을 엄마가 먼저 말로 설명해 주는 것이 가장 효과적입니다.');
     }
     tips = tips.slice(0, 3);
   }
@@ -1799,18 +1824,6 @@ function generateParentSummary(sub, rPct, ePct, cPct, sPct, pct, data){
   // ── 불편한 질문 (지연 있을 때만) ──
   if(anyDelay){
     // 질문 풀 (결과 패턴별)
-    var firstName = name.length > 1 ? name.slice(1) : name; // 성 제외 이름
-
-    // 받침 유무 판단 → 받침 있으면 "이가", 없으면 "가"
-    function hasBatchim(str){
-      var last = str[str.length - 1];
-      var code = last.charCodeAt(0);
-      if(code < 0xAC00 || code > 0xD7A3) return false;
-      return (code - 0xAC00) % 28 !== 0;
-    }
-    var ga  = hasBatchim(firstName) ? '이가' : '가';   // ~가 / ~이가
-    var wa  = hasBatchim(firstName) ? '이와' : '와';   // ~와 / ~이와
-    var ege = hasBatchim(firstName) ? '에게' : '에게'; // 동일
 
     var qPool = {
       // 수용언어 지연 관련
@@ -1829,7 +1842,7 @@ function generateParentSummary(sub, rPct, ePct, cPct, sPct, pct, data){
       c: [
         firstName+ga+' 울면 이유도 묻기 전에 안아주거나 원하는 걸 먼저 줬던 적 있나요?',
         firstName+ga+' 뭔가를 가리키거나 끌어당길 때, "어, 왜?" 한 마디 건네고 넘어간 적 있나요?',
-        '하루에 '+firstName+wa+' 눈을 마주치고 '+firstName+' 표정만 바라본 시간이 얼마나 되나요?'
+        '하루에 '+firstName+wa+' 눈을 마주치고 '+firstName+(hasBatchim(firstName)?'이':'')+' 표정만 바라본 시간이 얼마나 되나요?'
       ],
       // 사회적 의사소통 지연 관련
       s: [
@@ -1859,7 +1872,7 @@ function generateParentSummary(sub, rPct, ePct, cPct, sPct, pct, data){
       selectedQ.forEach(function(q){
         html += '<div style="font-size:13.5px;color:#4A2020;line-height:1.85;padding:7px 0;border-bottom:1px dashed #E8C4C4;">'+q+'</div>';
       });
-      html += '<div style="font-size:12.5px;color:#A05050;margin-top:10px;font-style:italic;">이 질문들은 잘못을 지적하려는 것이 아니라, 가장 빠르게 '+firstName+' 언어를 끌어올릴 수 있는 지점을 찾기 위한 것입니다.</div>';
+      html += '<div style="font-size:12.5px;color:#A05050;margin-top:10px;font-style:italic;">이 질문들은 잘못을 지적하려는 것이 아니라, 가장 빠르게 '+firstName+(hasBatchim(firstName)?'이':'')+' 언어를 끌어올릴 수 있는 지점을 찾기 위한 것입니다.</div>';
       html += '</div>';
     }
   }
