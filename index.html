@@ -1505,7 +1505,7 @@ function renderMonthList(){
   if(!container) return;
   if(keys.length === 0){ container.innerHTML = ''; return; }
   container.innerHTML = keys.map(function(k){
-    return '<button class="month-btn" onclick="setMonthFilter(''+k+'', this)">'+months[k]+'</button>';
+    return '<button class="month-btn" onclick="setMonthFilter(\'' + k + '\', this)">'+months[k]+'</button>';
   }).join('');
 }
 
