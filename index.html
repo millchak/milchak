@@ -603,8 +603,9 @@
         <button class="filter-btn active" id="btn-all" onclick="setFilter('all',this)">전체</button>
         <button class="filter-btn" id="btn-week" onclick="setFilter('week',this)">이번 주</button>
         <div style="position:relative;display:inline-block;">
-          <button class="filter-btn" id="btn-month-drop" onclick="toggleMonthDrop(this)">월별 ▾</button>
-          <div id="month-dropdown" style="display:none;position:absolute;top:110%;left:0;background:#fff;border:1.5px solid var(--border);border-radius:12px;box-shadow:0 4px 16px rgba(0,0,0,0.10);z-index:100;min-width:140px;padding:6px 0;"></div>
+          <select id="month-select" onchange="onMonthSelect(this)" style="padding:6px 28px 6px 12px;border:1.5px solid var(--border);border-radius:20px;font-size:12.5px;font-weight:600;font-family:'Noto Sans KR',sans-serif;color:var(--warm-gray);background:#fff;cursor:pointer;appearance:none;-webkit-appearance:none;outline:none;">
+            <option value="">월별 ▾</option>
+          </select>
         </div>
         <span style="margin-left:auto;font-size:12px;color:var(--warm-gray);" id="filter-count"></span>
       </div>
@@ -1394,7 +1395,7 @@ function showAdminPanel(){
   showPage('page-admin');
   var list=document.getElementById('submission-list');
   var filtered = getFilteredSubmissions();
-  renderMonthList();
+  renderMonthSelect();
   var countEl = document.getElementById('filter-count');
   if(countEl) countEl.textContent = '총 '+filtered.length+'건';
   if(filtered.length===0){
@@ -1448,61 +1449,52 @@ function setFilter(type, btn){
   showAdminPanel();
 }
 
-function toggleMonthDrop(btn){
-  var dd = document.getElementById('month-dropdown');
-  if(!dd) return;
-  if(dd.style.display === 'none'){
-    renderMonthDropdown();
-    dd.style.display = 'block';
+function onMonthSelect(sel){
+  var val = sel.value;
+  if(!val){
+    // 선택 안함 -> 전체로
+    currentFilter = 'all';
+    currentMonthFilter = null;
+    document.querySelectorAll('.filter-btn').forEach(function(b){ b.classList.remove('active'); });
+    var btnAll = document.getElementById('btn-all');
+    if(btnAll) btnAll.classList.add('active');
   } else {
-    dd.style.display = 'none';
+    currentFilter = 'month_specific';
+    currentMonthFilter = val;
+    document.querySelectorAll('.filter-btn').forEach(function(b){ b.classList.remove('active'); });
   }
-}
-
-function setMonthFilter(ym, label){
-  currentFilter = 'month_specific';
-  currentMonthFilter = ym;
-  document.querySelectorAll('.filter-btn').forEach(function(b){ b.classList.remove('active'); });
-  var dropBtn = document.getElementById('btn-month-drop');
-  if(dropBtn){ dropBtn.classList.add('active'); dropBtn.textContent = label + ' ▾'; }
-  var dd = document.getElementById('month-dropdown');
-  if(dd) dd.style.display = 'none';
   showAdminPanel();
 }
 
-function renderMonthDropdown(){
+function renderMonthSelect(){
   var months = {};
   submissions.forEach(function(s){
     var d = parseKoreanDate(s.date);
     if(d){
-      var key = d.getFullYear()+'-'+(d.getMonth()+1 < 10 ? '0'+(d.getMonth()+1) : d.getMonth()+1);
-      var label = d.getFullYear()+'년 '+(d.getMonth()+1)+'월';
+      var mo = d.getMonth()+1;
+      var key = d.getFullYear()+'-'+(mo < 10 ? '0'+mo : mo);
+      var label = d.getFullYear()+'년 '+mo+'월';
       months[key] = label;
     }
   });
   var keys = Object.keys(months).sort().reverse();
-  var dd = document.getElementById('month-dropdown');
-  if(!dd) return;
-  if(keys.length === 0){
-    dd.innerHTML = '<div style="padding:10px 16px;font-size:13px;color:#aaa;">데이터 없음</div>';
-    return;
-  }
-  var html = '';
+  var sel = document.getElementById('month-select');
+  if(!sel) return;
+  var html = '<option value="">월별 ▾</option>';
   keys.forEach(function(k){
-    var isActive = currentMonthFilter === k ? 'background:#C8DDD0;font-weight:700;' : '';
-    html += '<div class="month-drop-item' + (currentMonthFilter===k?' month-drop-active':'') + '" onclick="setMonthFilter(\''+k+'\',\''+months[k]+'\')">'+months[k]+'</div>';
+    var selected = currentMonthFilter === k ? ' selected' : '';
+    html += '<option value="'+k+'"'+selected+'>'+months[k]+'</option>';
   });
-  dd.innerHTML = html;
-}
-
-// 드롭다운 외부 클릭시 닫기
-document.addEventListener('click', function(e){
-  var dd = document.getElementById('month-dropdown');
-  var btn = document.getElementById('btn-month-drop');
-  if(dd && btn && !btn.contains(e.target) && !dd.contains(e.target)){
-    dd.style.display = 'none';
+  sel.innerHTML = html;
+  // 월별 선택중이면 select 색상 변경
+  if(currentFilter === 'month_specific'){
+    sel.style.color = 'var(--sage-dark)';
+    sel.style.borderColor = 'var(--sage)';
+  } else {
+    sel.style.color = 'var(--warm-gray)';
+    sel.style.borderColor = 'var(--border)';
   }
-});
+}
 
 function getFilteredSubmissions(){
   var now = new Date();
