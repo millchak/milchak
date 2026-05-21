@@ -219,6 +219,9 @@
   .filter-btn { padding: 6px 14px; background: #fff; border: 1.5px solid var(--border); border-radius: 20px; font-size: 12.5px; font-weight: 600; cursor: pointer; font-family: 'Noto Sans KR', sans-serif; transition: all 0.2s; color: var(--warm-gray); }
   .filter-btn:hover { border-color: var(--sage); color: var(--sage-dark); }
   .filter-btn.active { background: var(--sage); border-color: var(--sage); color: #fff; }
+  .month-btn { padding: 4px 12px; background: #fff; border: 1.5px solid var(--border); border-radius: 20px; font-size: 12px; font-weight: 600; cursor: pointer; font-family: 'Noto Sans KR', sans-serif; transition: all 0.2s; color: var(--warm-gray); }
+  .month-btn:hover { border-color: var(--sage); color: var(--sage-dark); }
+  .month-btn.active { background: var(--sage-dark); border-color: var(--sage-dark); color: #fff; }
   .report-title { font-family: 'Noto Serif KR', serif; font-size: 22px; font-weight: 700; color: var(--charcoal); }
   .report-meta { font-size: 14px; color: var(--warm-gray); margin-top: 3px; }
   .report-child-card { background: #fff; border-radius: 14px; padding: 18px 22px; box-shadow: var(--shadow); margin-bottom: 18px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
@@ -594,13 +597,16 @@
       Google Sheets에 저장된 모든 문진 결과가 이 화면에 표시됩니다.
     </div>
     <!-- 필터 영역 -->
-    <div id="filter-bar" style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:14px;padding:12px 16px;background:#fff;border-radius:12px;border:1px solid var(--border);">
-      <span style="font-size:13px;font-weight:600;color:var(--charcoal);">📅 기간 필터</span>
-      <button class="filter-btn active" onclick="setFilter('all',this)">전체</button>
-      <button class="filter-btn" onclick="setFilter('week',this)">이번 주</button>
-      <button class="filter-btn" onclick="setFilter('month',this)">이번 달</button>
-      <button class="filter-btn" onclick="setFilter('last_month',this)">지난 달</button>
-      <span style="margin-left:auto;font-size:12px;color:var(--warm-gray);" id="filter-count"></span>
+    <div id="filter-bar" style="margin-bottom:14px;background:#fff;border-radius:12px;border:1px solid var(--border);overflow:hidden;">
+      <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:12px 16px;">
+        <span style="font-size:13px;font-weight:600;color:var(--charcoal);">📅 기간 필터</span>
+        <button class="filter-btn active" onclick="setFilter('all',this)">전체</button>
+        <button class="filter-btn" onclick="setFilter('week',this)">이번 주</button>
+        <button class="filter-btn" onclick="setFilter('month',this)">이번 달</button>
+        <button class="filter-btn" onclick="setFilter('last_month',this)">지난 달</button>
+        <span style="margin-left:auto;font-size:12px;color:var(--warm-gray);" id="filter-count"></span>
+      </div>
+      <div id="month-list" style="display:flex;flex-wrap:wrap;gap:6px;padding:0 16px 12px;border-top:1px solid var(--border);padding-top:10px;"></div>
     </div>
     <div id="load-status" style="display:none;text-align:center;padding:16px;font-size:14px;color:var(--warm-gray);">불러오는 중...</div>
     <div id="submission-list" class="submission-list"></div>
@@ -1387,6 +1393,7 @@ function showAdminPanel(){
   showPage('page-admin');
   var list=document.getElementById('submission-list');
   var filtered = getFilteredSubmissions();
+  renderMonthList();
   var countEl = document.getElementById('filter-count');
   if(countEl) countEl.textContent = '총 '+filtered.length+'건';
   if(filtered.length===0){
@@ -1412,10 +1419,36 @@ function showAdminPanel(){
 function adminLogout(){ showPage('page-info'); }
 
 var currentFilter = 'all';
+var currentMonthFilter = null; // 'YYYY-MM' 형식
+
+function parseKoreanDate(dateStr){
+  // "2026. 5. 21. 오전 11:15:56" 형식 파싱
+  if(!dateStr) return null;
+  try {
+    var m = dateStr.match(/(\d{4})\. (\d{1,2})\. (\d{1,2})\. (오전|오후) (\d{1,2}):(\d{2}):(\d{2})/);
+    if(m){
+      var yr=parseInt(m[1]), mo=parseInt(m[2])-1, dy=parseInt(m[3]);
+      var hr=parseInt(m[5]), min=parseInt(m[6]), sec=parseInt(m[7]);
+      if(m[4]==='오후' && hr!==12) hr+=12;
+      if(m[4]==='오전' && hr===12) hr=0;
+      return new Date(yr, mo, dy, hr, min, sec);
+    }
+    return new Date(dateStr);
+  } catch(e){ return null; }
+}
 
 function setFilter(type, btn){
   currentFilter = type;
+  currentMonthFilter = null;
   document.querySelectorAll('.filter-btn').forEach(function(b){ b.classList.remove('active'); });
+  btn.classList.add('active');
+  showAdminPanel();
+}
+
+function setMonthFilter(ym, btn){
+  currentFilter = 'month_specific';
+  currentMonthFilter = ym;
+  document.querySelectorAll('.filter-btn, .month-btn').forEach(function(b){ b.classList.remove('active'); });
   btn.classList.add('active');
   showAdminPanel();
 }
@@ -1424,24 +1457,56 @@ function getFilteredSubmissions(){
   var now = new Date();
   if(currentFilter === 'all') return submissions.slice();
   if(currentFilter === 'week'){
-    var weekAgo = new Date(now); weekAgo.setDate(now.getDate() - now.getDay());
-    weekAgo.setHours(0,0,0,0);
-    return submissions.filter(function(s){ return new Date(s.date) >= weekAgo; });
+    var weekStart = new Date(now);
+    weekStart.setDate(now.getDate() - now.getDay());
+    weekStart.setHours(0,0,0,0);
+    return submissions.filter(function(s){
+      var d = parseKoreanDate(s.date);
+      return d && d >= weekStart;
+    });
   }
   if(currentFilter === 'month'){
     return submissions.filter(function(s){
-      var d = new Date(s.date);
-      return d.getFullYear()===now.getFullYear() && d.getMonth()===now.getMonth();
+      var d = parseKoreanDate(s.date);
+      return d && d.getFullYear()===now.getFullYear() && d.getMonth()===now.getMonth();
     });
   }
   if(currentFilter === 'last_month'){
     var lm = new Date(now.getFullYear(), now.getMonth()-1, 1);
     return submissions.filter(function(s){
-      var d = new Date(s.date);
-      return d.getFullYear()===lm.getFullYear() && d.getMonth()===lm.getMonth();
+      var d = parseKoreanDate(s.date);
+      return d && d.getFullYear()===lm.getFullYear() && d.getMonth()===lm.getMonth();
+    });
+  }
+  if(currentFilter === 'month_specific' && currentMonthFilter){
+    var parts = currentMonthFilter.split('-');
+    var yr = parseInt(parts[0]), mo = parseInt(parts[1])-1;
+    return submissions.filter(function(s){
+      var d = parseKoreanDate(s.date);
+      return d && d.getFullYear()===yr && d.getMonth()===mo;
     });
   }
   return submissions.slice();
+}
+
+function renderMonthList(){
+  // 제출된 데이터에서 월 목록 추출
+  var months = {};
+  submissions.forEach(function(s){
+    var d = parseKoreanDate(s.date);
+    if(d){
+      var key = d.getFullYear()+'-'+(d.getMonth()+1 < 10 ? '0'+(d.getMonth()+1) : d.getMonth()+1);
+      var label = d.getFullYear()+'년 '+(d.getMonth()+1)+'월';
+      months[key] = label;
+    }
+  });
+  var keys = Object.keys(months).sort().reverse();
+  var container = document.getElementById('month-list');
+  if(!container) return;
+  if(keys.length === 0){ container.innerHTML = ''; return; }
+  container.innerHTML = keys.map(function(k){
+    return '<button class="month-btn" onclick="setMonthFilter(''+k+'', this)">'+months[k]+'</button>';
+  }).join('');
 }
 
 function loadFromSheets(){
