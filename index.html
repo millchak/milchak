@@ -219,9 +219,10 @@
   .filter-btn { padding: 6px 14px; background: #fff; border: 1.5px solid var(--border); border-radius: 20px; font-size: 12.5px; font-weight: 600; cursor: pointer; font-family: 'Noto Sans KR', sans-serif; transition: all 0.2s; color: var(--warm-gray); }
   .filter-btn:hover { border-color: var(--sage); color: var(--sage-dark); }
   .filter-btn.active { background: var(--sage); border-color: var(--sage); color: #fff; }
-  .month-btn { padding: 4px 12px; background: #fff; border: 1.5px solid var(--border); border-radius: 20px; font-size: 12px; font-weight: 600; cursor: pointer; font-family: 'Noto Sans KR', sans-serif; transition: all 0.2s; color: var(--warm-gray); }
-  .month-btn:hover { border-color: var(--sage); color: var(--sage-dark); }
-  .month-btn.active { background: var(--sage-dark); border-color: var(--sage-dark); color: #fff; }
+  .month-drop-item { padding: 9px 18px; font-size: 13px; cursor: pointer; font-family: 'Noto Sans KR', sans-serif; }
+  .month-drop-item:hover { background: #F5F0EB; }
+  .month-drop-active { background: #C8DDD0; font-weight: 700; }
+
   .report-title { font-family: 'Noto Serif KR', serif; font-size: 22px; font-weight: 700; color: var(--charcoal); }
   .report-meta { font-size: 14px; color: var(--warm-gray); margin-top: 3px; }
   .report-child-card { background: #fff; border-radius: 14px; padding: 18px 22px; box-shadow: var(--shadow); margin-bottom: 18px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
@@ -446,9 +447,9 @@
 <!-- PAGE 0: 아동 정보 -->
 <div id="page-info" class="page active">
   <div style="max-width:600px;margin:0 auto;padding:44px 24px 80px;">
-    <div class="intro-badge">온라인 언어발달 선별검사</div>
+    <div class="intro-badge">온라인 언어발달 선별문진</div>
     <h1 class="intro-title">우리 아이의 언어발달,<br>지금 확인해보세요</h1>
-    <p class="intro-sub">아이의 기본 정보를 입력하시면 개월 수에 맞는 문진표가 자동으로 준비됩니다.<br>모든 정보는 검사 목적으로만 사용되며, 결과는 전문가만 열람합니다.</p>
+    <p class="intro-sub">아이의 기본 정보를 입력하시면 개월 수에 맞는 문진표가 자동으로 준비됩니다.<br>모든 정보는 선별 문진 목적으로만 사용되며, 결과는 관리자만 열람합니다.</p>
     <div class="info-card">
       <div class="info-card-title">👶 아동 기본 정보</div>
       <div class="info-body">
@@ -484,8 +485,7 @@
     <button class="btn-next" id="btn-next" disabled onclick="goToChecklist()">문진표 시작하기 →</button>
     <div class="notice-box">
       <p>⚠️ <strong>안내드립니다</strong><br>
-      본 검사는 선별 목적의 보호자 보고형 문진표입니다. 정확한 진단은 반드시 전문가와의 상담을 통해 이루어져야 합니다.<br>
-      제출된 결과는 <strong>관리자(전문가)만 열람</strong>할 수 있습니다.</p>
+      본 검사는 선별 목적의 보호자 보고형 문진표입니다. 정확한 진단은 반드시 전문가와의 상담을 통해 이루어져야 합니다.</p>
     </div>
   </div>
 </div>
@@ -597,16 +597,17 @@
       Google Sheets에 저장된 모든 문진 결과가 이 화면에 표시됩니다.
     </div>
     <!-- 필터 영역 -->
-    <div id="filter-bar" style="margin-bottom:14px;background:#fff;border-radius:12px;border:1px solid var(--border);overflow:hidden;">
-      <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:12px 16px;">
+    <div id="filter-bar" style="margin-bottom:14px;background:#fff;border-radius:12px;border:1px solid var(--border);padding:12px 16px;">
+      <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;">
         <span style="font-size:13px;font-weight:600;color:var(--charcoal);">📅 기간 필터</span>
-        <button class="filter-btn active" onclick="setFilter('all',this)">전체</button>
-        <button class="filter-btn" onclick="setFilter('week',this)">이번 주</button>
-        <button class="filter-btn" onclick="setFilter('month',this)">이번 달</button>
-        <button class="filter-btn" onclick="setFilter('last_month',this)">지난 달</button>
+        <button class="filter-btn active" id="btn-all" onclick="setFilter('all',this)">전체</button>
+        <button class="filter-btn" id="btn-week" onclick="setFilter('week',this)">이번 주</button>
+        <div style="position:relative;display:inline-block;">
+          <button class="filter-btn" id="btn-month-drop" onclick="toggleMonthDrop(this)">월별 ▾</button>
+          <div id="month-dropdown" style="display:none;position:absolute;top:110%;left:0;background:#fff;border:1.5px solid var(--border);border-radius:12px;box-shadow:0 4px 16px rgba(0,0,0,0.10);z-index:100;min-width:140px;padding:6px 0;"></div>
+        </div>
         <span style="margin-left:auto;font-size:12px;color:var(--warm-gray);" id="filter-count"></span>
       </div>
-      <div id="month-list" style="display:flex;flex-wrap:wrap;gap:6px;padding:0 16px 12px;border-top:1px solid var(--border);padding-top:10px;"></div>
     </div>
     <div id="load-status" style="display:none;text-align:center;padding:16px;font-size:14px;color:var(--warm-gray);">불러오는 중...</div>
     <div id="submission-list" class="submission-list"></div>
@@ -1442,16 +1443,66 @@ function setFilter(type, btn){
   currentMonthFilter = null;
   document.querySelectorAll('.filter-btn').forEach(function(b){ b.classList.remove('active'); });
   btn.classList.add('active');
+  var dd = document.getElementById('month-dropdown');
+  if(dd) dd.style.display = 'none';
   showAdminPanel();
 }
 
-function setMonthFilter(ym, btn){
+function toggleMonthDrop(btn){
+  var dd = document.getElementById('month-dropdown');
+  if(!dd) return;
+  if(dd.style.display === 'none'){
+    renderMonthDropdown();
+    dd.style.display = 'block';
+  } else {
+    dd.style.display = 'none';
+  }
+}
+
+function setMonthFilter(ym, label){
   currentFilter = 'month_specific';
   currentMonthFilter = ym;
-  document.querySelectorAll('.filter-btn, .month-btn').forEach(function(b){ b.classList.remove('active'); });
-  btn.classList.add('active');
+  document.querySelectorAll('.filter-btn').forEach(function(b){ b.classList.remove('active'); });
+  var dropBtn = document.getElementById('btn-month-drop');
+  if(dropBtn){ dropBtn.classList.add('active'); dropBtn.textContent = label + ' ▾'; }
+  var dd = document.getElementById('month-dropdown');
+  if(dd) dd.style.display = 'none';
   showAdminPanel();
 }
+
+function renderMonthDropdown(){
+  var months = {};
+  submissions.forEach(function(s){
+    var d = parseKoreanDate(s.date);
+    if(d){
+      var key = d.getFullYear()+'-'+(d.getMonth()+1 < 10 ? '0'+(d.getMonth()+1) : d.getMonth()+1);
+      var label = d.getFullYear()+'년 '+(d.getMonth()+1)+'월';
+      months[key] = label;
+    }
+  });
+  var keys = Object.keys(months).sort().reverse();
+  var dd = document.getElementById('month-dropdown');
+  if(!dd) return;
+  if(keys.length === 0){
+    dd.innerHTML = '<div style="padding:10px 16px;font-size:13px;color:#aaa;">데이터 없음</div>';
+    return;
+  }
+  var html = '';
+  keys.forEach(function(k){
+    var isActive = currentMonthFilter === k ? 'background:#C8DDD0;font-weight:700;' : '';
+    html += '<div class="month-drop-item' + (currentMonthFilter===k?' month-drop-active':'') + '" onclick="setMonthFilter(\''+k+'\',\''+months[k]+'\')">'+months[k]+'</div>';
+  });
+  dd.innerHTML = html;
+}
+
+// 드롭다운 외부 클릭시 닫기
+document.addEventListener('click', function(e){
+  var dd = document.getElementById('month-dropdown');
+  var btn = document.getElementById('btn-month-drop');
+  if(dd && btn && !btn.contains(e.target) && !dd.contains(e.target)){
+    dd.style.display = 'none';
+  }
+});
 
 function getFilteredSubmissions(){
   var now = new Date();
@@ -1529,11 +1580,18 @@ function loadFromSheets(){
         if(data.fullData){
           try{
             var sub = JSON.parse(data.fullData);
-            sub.firebaseId = doc.id; // doc.id 저장
-            if(existingCodes.indexOf(sub.code) === -1 && deletedCodes.indexOf(sub.code) === -1){
-              submissions.push(sub);
-              existingCodes.push(sub.code);
-              added++;
+            sub.firebaseId = doc.id;
+            var existingIdx = existingCodes.indexOf(sub.code);
+            if(existingIdx === -1){
+              // 새 항목이면 추가
+              if(deletedCodes.indexOf(sub.code) === -1){
+                submissions.push(sub);
+                existingCodes.push(sub.code);
+                added++;
+              }
+            } else {
+              // 이미 있는 항목이면 firebaseId만 업데이트
+              submissions[existingIdx].firebaseId = doc.id;
             }
           } catch(e){ console.log('parse error', e); }
         }
