@@ -1062,7 +1062,6 @@ function updateProgress(){
 
 function getAllItemIds(){
   var ids = [];
-  if(!childInfo.ageGroup || !CHECKLISTS[childInfo.ageGroup]) return ids;
   CHECKLISTS[childInfo.ageGroup].sections.forEach(function(sec){
     if(sec.items) sec.items.forEach(function(i){ ids.push(i.id); });
     if(sec.subsections) sec.subsections.forEach(function(s){ s.items.forEach(function(i){ ids.push(i.id); }); });
@@ -1159,18 +1158,13 @@ function generateCode(name, dob){
 // ═══════════════════════════════════════
 function submitCheck(){
   try {
-  if(!childInfo.ageGroup || !CHECKLISTS[childInfo.ageGroup]){
-    alert('아이 정보를 먼저 입력해주세요.');
-    return;
-  }
   var total = getAllItemIds().length;
   var answered = Object.keys(checkedItems).length;
 
   var isP3 = (childInfo.ageGroup===24 && countExpression24()<=7);
-  var memoEl = isP3
-    ? document.getElementById('child-memo-p3')
-    : document.getElementById('child-memo-p1');
-  var memo = memoEl ? memoEl.value.trim() : '';
+  var memo = isP3
+    ? document.getElementById('child-memo-p3').value.trim()
+    : document.getElementById('child-memo-p1').value.trim();
 
   var code = generateCode(childInfo.name, childInfo.dob);
   var passCount = Object.values(checkedItems).filter(Boolean).length;
@@ -1252,7 +1246,7 @@ function submitCheck(){
   showPage('page-done');
   } catch(err){
     console.error('제출 오류:', err);
-    alert('제출 중 오류가 발생했습니다.\n\n' + err.message);
+    alert('제출 중 오류가 발생했습니다: ' + err.message);
   }
 }
 
@@ -1364,8 +1358,8 @@ function resetAll(){
   document.getElementById('gender-m').classList.remove('selected');
   document.getElementById('gender-f').classList.remove('selected');
   document.getElementById('btn-next').disabled = true;
-  var m1 = document.getElementById('child-memo-p1'); if(m1) m1.value = '';
-  var m3 = document.getElementById('child-memo-p3'); if(m3) m3.value = '';
+  document.getElementById('child-memo-p1').value = '';
+  document.getElementById('child-memo-p3').value = '';
   showPage('page-info');
 }
 
